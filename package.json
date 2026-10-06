@@ -1,0 +1,35 @@
+{
+  "name": "@accureteam/iqx-cli",
+  "module": "index.ts",
+  "type": "module",
+  "private": true,
+  "devDependencies": {
+    "@types/bun": "latest",
+    "@types/diff": "^8.0.0"
+  },
+  "peerDependencies": {
+    "typescript": "^5"
+  },
+  "dependencies": {
+    "@clack/prompts": "^1.8.1",
+    "chalk": "^6.0.1",
+    "cli-highlight": "^2.1.11",
+    "commander": "^15.0.0",
+    "conf": "^15.1.0",
+    "diff": "^9.0.0",
+    "dotenv": "^18.0.5",
+    "ora": "^9.4.1",
+    "simple-git": "^4.0.2"
+  },
+  "version": "0.1.0",
+  "description": "Cross-platform autonomous agentic CLI for local pair programming & Accure Enterprise AI",
+  "bin": {
+    "iqx": "./bin/iqx"
+  },
+  "scripts": {
+    "start": "bun run src/index.ts",
+    "dev": "bun --watch src/index.ts",
+    "build": "bun build --compile --outfile=bin/iqx src/index.ts",
+    "build:all": "bun run scripts/build-all.ts"
+  }
+}
