@@ -1,7 +1,7 @@
 # IQX CLI (⚡)
 **Autonomous Agentic Terminal Assistant & Accure Enterprise AI Gateway**
 
-IQX CLI is a standalone, cross-platform pair-programming agent built to deliver the developer agility of **Claude Code** and **ChatGPT CLI**, with native integration to Accure Enterprise Unified Context Graph (EUCG), Milvus Vector Store, and Panel of Experts (POE).
+IQX CLI is a standalone, cross-platform pair-programming agent built to deliver the developer agility of AI, with native integration to Accure  Unified Context Graph (UCG), Agentic Workflows, and Panel of Experts (POE).
 
 ---
 
