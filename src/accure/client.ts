@@ -53,40 +53,38 @@ export class AccureClient {
       return { valid: false, error: "No API token provided" };
     }
 
-    try {
-      // Try panels endpoint first
-      const res = await fetch(`${this.apiUrl}/api/poe/panels`, {
-        method: "GET",
-        headers: this.getHeaders()
-      });
+    const testEndpoints = [
+      "/api/poe/v1/panels",
+      "/api/poe/panels",
+      "/api/v1/user-api-keys",
+      "/api/user-api-keys"
+    ];
 
-      if (res.ok) {
-        return { valid: true };
+    for (const ep of testEndpoints) {
+      try {
+        const res = await fetch(`${this.apiUrl}${ep}`, {
+          method: "GET",
+          headers: this.getHeaders()
+        });
+
+        if (res.ok) {
+          const data = await res.json().catch(() => ({}));
+          return { valid: true, user: data };
+        }
+
+        if (res.status === 401 || res.status === 403) {
+          // If explicitly unauthorized on a valid route, continue checking or return error
+          if (ep === "/api/poe/v1/panels") {
+            return { valid: false, error: "Invalid or expired API token" };
+          }
+        }
+      } catch (err: any) {
+        // Network failure to reach this host
+        return { valid: false, error: `Could not connect to ${this.apiUrl}: ${err.message}` };
       }
-
-      if (res.status === 401 || res.status === 403) {
-        return { valid: false, error: "Invalid or expired API token" };
-      }
-
-      // Try user-api-keys endpoint as alternate
-      const altRes = await fetch(`${this.apiUrl}/api/v1/user-api-keys`, {
-        method: "GET",
-        headers: this.getHeaders()
-      });
-
-      if (altRes.ok) {
-        const data = await altRes.json();
-        return { valid: true, user: data };
-      }
-
-      if (altRes.status === 401 || altRes.status === 403) {
-        return { valid: false, error: "Invalid or expired API token" };
-      }
-
-      return { valid: false, error: `Server responded with HTTP ${res.status}` };
-    } catch (err: any) {
-      return { valid: false, error: `Could not connect to ${this.apiUrl}: ${err.message}` };
     }
+
+    return { valid: false, error: "Could not verify API token with server" };
   }
 
   async queryUCG(prompt: string, limit: number = 5): Promise<any> {
@@ -100,22 +98,40 @@ export class AccureClient {
   }
 
   async listPanels(): Promise<POEPanel[]> {
-    const res = await fetch(`${this.apiUrl}/api/poe/panels`, {
-      method: "GET",
-      headers: this.getHeaders()
-    });
-    if (!res.ok) throw new Error(`Failed to fetch panels: ${res.statusText}`);
-    const data = await res.json();
-    return data.items || data.data || [];
+    const endpoints = ["/api/poe/v1/panels", "/api/poe/panels"];
+    for (const ep of endpoints) {
+      try {
+        const res = await fetch(`${this.apiUrl}${ep}`, {
+          method: "GET",
+          headers: this.getHeaders()
+        });
+        if (res.ok) {
+          const data = await res.json();
+          return data.items || data.data || [];
+        }
+      } catch {
+        // try next
+      }
+    }
+    throw new Error("Failed to fetch panels");
   }
 
   async listExperts(): Promise<POEExpert[]> {
-    const res = await fetch(`${this.apiUrl}/api/poe/experts`, {
-      method: "GET",
-      headers: this.getHeaders()
-    });
-    if (!res.ok) throw new Error(`Failed to fetch experts: ${res.statusText}`);
-    const data = await res.json();
-    return data.items || data.data || [];
+    const endpoints = ["/api/poe/v1/experts", "/api/poe/experts"];
+    for (const ep of endpoints) {
+      try {
+        const res = await fetch(`${this.apiUrl}${ep}`, {
+          method: "GET",
+          headers: this.getHeaders()
+        });
+        if (res.ok) {
+          const data = await res.json();
+          return data.items || data.data || [];
+        }
+      } catch {
+        // try next
+      }
+    }
+    throw new Error("Failed to fetch experts");
   }
 }
