@@ -5,9 +5,10 @@ import { configCommand } from "./commands/config";
 import { chatCommand, startChatSession } from "./commands/chat";
 import { ucgCommand } from "./commands/ucg";
 import { expertCommand } from "./commands/expert";
+import { modelsCommand } from "./commands/models";
 import { uninstallCommand } from "./commands/uninstall";
 import { Agent } from "./core/agent";
-import { configStore } from "./core/config";
+import { configStore, getActiveModel } from "./core/config";
 import { renderBanner } from "./core/terminal";
 import { ensureAuthenticated } from "./core/auth_guard";
 
@@ -17,13 +18,14 @@ program
   .name("iqx")
   .description("Cross-platform autonomous agentic CLI for local pair programming & Accure Enterprise AI")
   .version("0.1.0")
-  .option("-m, --model <model>", "Model to use (accure-enterprise, gpt-4o)")
+  .option("-m, --model <model>", "Model to use (AccureIQx Model ID or name)")
   .option("-y, --yes", "Auto-approve all tool actions (autonomous mode)")
   .option("-p, --pipe <prompt>", "Run non-interactively in headless pipe mode")
   .argument("[prompt...]", "Task or coding prompt to execute immediately")
   .action(async (promptArgs, options) => {
     let prompt = options.pipe || promptArgs.join(" ").trim();
-    const model = options.model || configStore.get("default_model") || "accure-enterprise";
+    const active = getActiveModel();
+    const model = options.model || active.id || "accure-enterprise";
 
     // Read from standard input if piped (e.g. cat file.txt | iqx "check this")
     if (!process.stdin.isTTY && !options.pipe) {
@@ -60,6 +62,7 @@ program.addCommand(configCommand);
 program.addCommand(chatCommand);
 program.addCommand(ucgCommand);
 program.addCommand(expertCommand);
+program.addCommand(modelsCommand);
 program.addCommand(uninstallCommand);
 
 program.parse(process.argv);

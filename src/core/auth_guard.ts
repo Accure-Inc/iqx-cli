@@ -83,7 +83,45 @@ export async function ensureAuthenticated(): Promise<boolean> {
   const finalUrl = result.resolvedUrl || client.apiUrl;
   configStore.set("api_token", token);
   configStore.set("api_url", finalUrl);
-  configStore.set("default_model", "accure-enterprise");
+
+  // Fetch and register default models (chat, vision, audio)
+  const sModels = p.spinner();
+  sModels.start("Fetching default AccureIQx models (chat, vision, audio)...");
+  try {
+    const summary = await client.fetchDefaultModels();
+    sModels.stop(chalk.green("AccureIQx Models Synchronized!"));
+
+    console.log("\n" + chalk.bold.cyan("AccureIQx Default Models:"));
+    if (summary.chat) {
+      console.log(`  ${chalk.bold("• Chat:")}   ${chalk.green(summary.chat.name)} ${chalk.dim(`(ID: ${summary.chat.id})`)}`);
+      configStore.set("default_model", summary.chat.id);
+      configStore.set("chat_model_id", summary.chat.id);
+      configStore.set("active_model_name", summary.chat.name);
+    } else {
+      console.log(`  ${chalk.bold("• Chat:")}   ${chalk.gray("None configured (using system default)")}`);
+      configStore.set("default_model", "accure-enterprise");
+    }
+
+    if (summary.vision) {
+      console.log(`  ${chalk.bold("• Vision:")} ${chalk.green(summary.vision.name)} ${chalk.dim(`(ID: ${summary.vision.id})`)}`);
+      configStore.set("vision_model_id", summary.vision.id);
+      configStore.set("vision_model_name", summary.vision.name);
+    } else {
+      console.log(`  ${chalk.bold("• Vision:")} ${chalk.gray("None configured")}`);
+    }
+
+    if (summary.audio) {
+      console.log(`  ${chalk.bold("• Audio:")}  ${chalk.green(summary.audio.name)} ${chalk.dim(`(ID: ${summary.audio.id})`)}`);
+      configStore.set("audio_model_id", summary.audio.id);
+      configStore.set("audio_model_name", summary.audio.name);
+    } else {
+      console.log(`  ${chalk.bold("• Audio:")}  ${chalk.gray("None configured")}`);
+    }
+    console.log();
+  } catch (err: any) {
+    sModels.stop(chalk.yellow("Could not load default models: " + err.message));
+    configStore.set("default_model", "accure-enterprise");
+  }
 
   p.outro(chalk.bold.green(`✔ Connected successfully to ${finalUrl}! Saved to ~/.iqx/config.json\n`));
   return true;

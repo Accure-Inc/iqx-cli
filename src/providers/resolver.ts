@@ -1,4 +1,5 @@
 import { configStore, getEffectiveToken, getEffectiveApiUrl } from "../core/config";
+import { AccureClient } from "../accure/client";
 import { AVAILABLE_TOOLS, type ToolDefinition } from "../tools/registry";
 
 export interface ChatMessage {
@@ -52,31 +53,24 @@ export async function callModel(
   );
 }
 
-async function callAccureGateway(messages: ChatMessage[], tools: ToolDefinition[], model: string, token: string): Promise<LLMResponse> {
+async function callAccureGateway(
+  messages: ChatMessage[],
+  tools: ToolDefinition[],
+  model: string,
+  token: string
+): Promise<LLMResponse> {
   const apiUrl = getEffectiveApiUrl();
-  const res = await fetch(`${apiUrl}/api/v1/chat/completions`, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      "X-API-Key": token,
-      "Authorization": `Bearer ${token}`
-    },
-    body: JSON.stringify({
-      model: model === "accure-enterprise" ? "default" : model,
-      messages: messages.map(m => ({ role: m.role, content: m.content }))
-    })
-  });
+  const client = new AccureClient(apiUrl, token);
 
-  if (!res.ok) {
-    const errText = await res.text();
-    throw new Error(`Accure Gateway Error (${res.status}): ${errText}`);
+  const lastUserMsg = messages.filter(m => m.role === "user").pop()?.content || "";
+  let targetModel = model;
+  if (targetModel === "accure-enterprise") {
+    targetModel = configStore.get("chat_model_id") || "default";
   }
 
-  const data: any = await res.json();
-  const choice = data.choices?.[0]?.message;
+  const res = await client.askStream(lastUserMsg, targetModel);
   return {
-    content: choice?.content || data.response || (typeof data === "string" ? data : JSON.stringify(data)),
-    tool_calls: choice?.tool_calls
+    content: res.content
   };
 }
 
