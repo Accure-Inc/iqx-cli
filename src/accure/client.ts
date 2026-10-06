@@ -11,6 +11,23 @@ export interface UserKeyInfo {
   status: string;
 }
 
+export interface POEPanel {
+  id: string;
+  title: string;
+  slug?: string;
+  description?: string;
+  status: string;
+  team_name?: string;
+}
+
+export interface POEExpert {
+  id: string;
+  title: string;
+  slug?: string;
+  description?: string;
+  status: string;
+}
+
 export class AccureClient {
   private apiUrl: string;
   private token?: string;
@@ -61,5 +78,25 @@ export class AccureClient {
     });
     if (!res.ok) throw new Error(`UCG query failed: ${res.statusText}`);
     return await res.json();
+  }
+
+  async listPanels(): Promise<POEPanel[]> {
+    const res = await fetch(`${this.apiUrl}/api/poe/panels`, {
+      method: "GET",
+      headers: this.getHeaders()
+    });
+    if (!res.ok) throw new Error(`Failed to fetch panels: ${res.statusText}`);
+    const data = await res.json();
+    return data.items || data.data || [];
+  }
+
+  async listExperts(): Promise<POEExpert[]> {
+    const res = await fetch(`${this.apiUrl}/api/poe/experts`, {
+      method: "GET",
+      headers: this.getHeaders()
+    });
+    if (!res.ok) throw new Error(`Failed to fetch experts: ${res.statusText}`);
+    const data = await res.json();
+    return data.items || data.data || [];
   }
 }

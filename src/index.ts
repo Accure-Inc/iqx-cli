@@ -4,6 +4,7 @@ import { authCommand } from "./commands/auth";
 import { configCommand } from "./commands/config";
 import { chatCommand } from "./commands/chat";
 import { ucgCommand } from "./commands/ucg";
+import { expertCommand } from "./commands/expert";
 import { Agent } from "./core/agent";
 import { configStore } from "./core/config";
 import { renderBanner } from "./core/terminal";
@@ -19,18 +20,29 @@ program
   .option("-p, --pipe <prompt>", "Run non-interactively in headless pipe mode")
   .argument("[prompt...]", "Task or coding prompt to execute immediately")
   .action(async (promptArgs, options) => {
-    const prompt = options.pipe || promptArgs.join(" ").trim();
+    let prompt = options.pipe || promptArgs.join(" ").trim();
     const model = options.model || configStore.get("default_model") || "claude-3-7-sonnet";
 
+    // Read from standard input if piped (e.g. cat file.txt | iqx "check this")
+    if (!process.stdin.isTTY && !options.pipe) {
+      const chunks: Buffer[] = [];
+      for await (const chunk of process.stdin) {
+        chunks.push(chunk);
+      }
+      const stdinData = Buffer.concat(chunks).toString("utf-8").trim();
+      if (stdinData) {
+        prompt = prompt ? `${prompt}\n\nContext from stdin:\n` + stdinData : stdinData;
+      }
+    }
+
     if (!prompt) {
-      // No prompt passed, launch interactive chat session
+      // Interactive chat session
       renderBanner(model);
-      const chatAction = chatCommand.actionHandler;
       await chatCommand.parseAsync(["chat", ...(options.yes ? ["-y"] : [])], { from: "user" });
       return;
     }
 
-    // Direct one-shot prompt execution
+    // Direct execution
     renderBanner(model);
     const agent = new Agent({
       model,
@@ -44,5 +56,6 @@ program.addCommand(authCommand);
 program.addCommand(configCommand);
 program.addCommand(chatCommand);
 program.addCommand(ucgCommand);
+program.addCommand(expertCommand);
 
 program.parse(process.argv);
