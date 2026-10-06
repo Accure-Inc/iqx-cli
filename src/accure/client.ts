@@ -28,12 +28,24 @@ export interface POEExpert {
   status: string;
 }
 
+export function normalizeApiUrl(rawUrl: string): string {
+  let url = (rawUrl || "http://localhost:8000").trim();
+  if (!url.startsWith("http://") && !url.startsWith("https://")) {
+    url = (url.includes("localhost") || url.includes("127.0.0.1")) ? `http://${url}` : `https://${url}`;
+  }
+  // Downgrade https:// to http:// for localhost/127.0.0.1 development servers
+  if (url.startsWith("https://localhost") || url.startsWith("https://127.0.0.1")) {
+    url = url.replace(/^https:\/\//, "http://");
+  }
+  return url.replace(/\/$/, "");
+}
+
 export class AccureClient {
-  private apiUrl: string;
+  public apiUrl: string;
   private token?: string;
 
   constructor(apiUrl?: string, token?: string) {
-    this.apiUrl = (apiUrl || getEffectiveApiUrl()).replace(/\/$/, "");
+    this.apiUrl = normalizeApiUrl(apiUrl || getEffectiveApiUrl());
     this.token = token || getEffectiveToken();
   }
 
@@ -48,9 +60,15 @@ export class AccureClient {
     return headers;
   }
 
-  async validateKey(): Promise<{ valid: boolean; user?: any; error?: string }> {
+  async validateKey(): Promise<{ valid: boolean; user?: any; error?: string; resolvedUrl?: string }> {
     if (!this.token) {
       return { valid: false, error: "No API token provided" };
+    }
+
+    // If port 3000 (web frontend) was entered, test port 8000 (backend API) too
+    const candidateUrls = [this.apiUrl];
+    if (this.apiUrl.includes(":3000")) {
+      candidateUrls.push(this.apiUrl.replace(":3000", ":8000"));
     }
 
     const testEndpoints = [
@@ -60,31 +78,34 @@ export class AccureClient {
       "/api/user-api-keys"
     ];
 
-    for (const ep of testEndpoints) {
-      try {
-        const res = await fetch(`${this.apiUrl}${ep}`, {
-          method: "GET",
-          headers: this.getHeaders()
-        });
+    let lastError = "";
 
-        if (res.ok) {
-          const data = await res.json().catch(() => ({}));
-          return { valid: true, user: data };
-        }
+    for (const host of candidateUrls) {
+      for (const ep of testEndpoints) {
+        try {
+          const res = await fetch(`${host}${ep}`, {
+            method: "GET",
+            headers: this.getHeaders()
+          });
 
-        if (res.status === 401 || res.status === 403) {
-          // If explicitly unauthorized on a valid route, continue checking or return error
-          if (ep === "/api/poe/v1/panels") {
-            return { valid: false, error: "Invalid or expired API token" };
+          if (res.ok) {
+            this.apiUrl = host;
+            const data = await res.json().catch(() => ({}));
+            return { valid: true, user: data, resolvedUrl: host };
           }
+
+          if (res.status === 401 || res.status === 403) {
+            if (ep === "/api/poe/v1/panels") {
+              lastError = "Invalid or expired API token";
+            }
+          }
+        } catch (err: any) {
+          lastError = `Could not connect to ${host}: ${err.message}`;
         }
-      } catch (err: any) {
-        // Network failure to reach this host
-        return { valid: false, error: `Could not connect to ${this.apiUrl}: ${err.message}` };
       }
     }
 
-    return { valid: false, error: "Could not verify API token with server" };
+    return { valid: false, error: lastError || "Could not verify API token with server" };
   }
 
   async queryUCG(prompt: string, limit: number = 5): Promise<any> {

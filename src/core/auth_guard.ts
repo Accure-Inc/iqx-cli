@@ -1,7 +1,7 @@
 import * as p from "@clack/prompts";
 import chalk from "chalk";
 import { configStore, getEffectiveToken, getEffectiveApiUrl } from "./config";
-import { AccureClient } from "../accure/client";
+import { AccureClient, normalizeApiUrl } from "../accure/client";
 import { logError } from "./terminal";
 
 export async function ensureAuthenticated(): Promise<boolean> {
@@ -19,13 +19,14 @@ export async function ensureAuthenticated(): Promise<boolean> {
   p.note(
     "1. Open AccureIQ in your browser (e.g. http://localhost:3000/developer/api-keys)\n" +
     "2. Navigate to Developer Hub > API Key Manager\n" +
-    "3. Click 'Create New Key' and copy your token (starts with ak-...)",
+    "3. Click 'Create New Key' and copy your token (starts with ak-...)\n" +
+    "4. For local development, backend API is at: http://localhost:8000",
     "How to get an API Token"
   );
 
   const defaultUrl = getEffectiveApiUrl() || "http://localhost:8000";
   const urlInput = await p.text({
-    message: "Enter Accure API URL:",
+    message: "Enter Accure API URL (Press Enter for default):",
     defaultValue: defaultUrl,
     placeholder: defaultUrl
   });
@@ -35,7 +36,8 @@ export async function ensureAuthenticated(): Promise<boolean> {
     process.exit(0);
   }
 
-  const apiUrl = ((urlInput as string).trim() || defaultUrl).replace(/\/$/, "");
+  const rawUrl = (urlInput as string).trim() || defaultUrl;
+  const apiUrl = normalizeApiUrl(rawUrl);
 
   const tokenInput = await p.password({
     message: "Enter your Accure API Token (starts with ak-):",
@@ -79,10 +81,11 @@ export async function ensureAuthenticated(): Promise<boolean> {
     s.stop(chalk.green("Credentials verified successfully!"));
   }
 
+  const finalUrl = result.resolvedUrl || client.apiUrl;
   configStore.set("api_token", token);
-  configStore.set("api_url", apiUrl);
+  configStore.set("api_url", finalUrl);
   configStore.set("default_model", "accure-enterprise");
 
-  p.outro(chalk.bold.green("✔ Connected successfully! Saved to ~/.iqx/config.json\n"));
+  p.outro(chalk.bold.green(`✔ Connected successfully to ${finalUrl}! Saved to ~/.iqx/config.json\n`));
   return true;
 }
