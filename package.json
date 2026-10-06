@@ -1,5 +1,5 @@
 {
-  "name": "@accureteam/iqx-cli",
+  "name": "@accure-inc/iqx-cli",
   "module": "index.ts",
   "type": "module",
   "private": true,
@@ -31,5 +31,13 @@
     "dev": "bun --watch src/index.ts",
     "build": "bun build --compile --outfile=bin/iqx src/index.ts",
     "build:all": "bun run scripts/build-all.ts"
-  }
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Accure-Inc/iqx-cli.git"
+  },
+  "bugs": {
+    "url": "https://github.com/Accure-Inc/iqx-cli/issues"
+  },
+  "homepage": "https://github.com/Accure-Inc/iqx-cli#readme"
 }

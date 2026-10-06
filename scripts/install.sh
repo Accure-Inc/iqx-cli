@@ -1,7 +1,7 @@
 #!/bin/sh
 set -e
 
-REPO="accureteam/iqx-cli"
+REPO="Accure-Inc/iqx-cli"
 INSTALL_DIR="/usr/local/bin"
 ALT_INSTALL_DIR="$HOME/.local/bin"
 

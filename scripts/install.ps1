@@ -1,7 +1,7 @@
 # IQX CLI Windows Installer (PowerShell)
 $ErrorActionPreference = "Stop"
 
-$Repo = "accureteam/iqx-cli"
+$Repo = "Accure-Inc/iqx-cli"
 $BinDir = "$Home\.iqx\bin"
 $ExePath = "$BinDir\iqx.exe"
 $Url = "https://github.com/$Repo/releases/latest/download/iqx-windows-x64.exe"
