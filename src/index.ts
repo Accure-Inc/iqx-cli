@@ -5,6 +5,7 @@ import { configCommand } from "./commands/config";
 import { chatCommand } from "./commands/chat";
 import { ucgCommand } from "./commands/ucg";
 import { expertCommand } from "./commands/expert";
+import { uninstallCommand } from "./commands/uninstall";
 import { Agent } from "./core/agent";
 import { configStore } from "./core/config";
 import { renderBanner } from "./core/terminal";
@@ -57,5 +58,6 @@ program.addCommand(configCommand);
 program.addCommand(chatCommand);
 program.addCommand(ucgCommand);
 program.addCommand(expertCommand);
+program.addCommand(uninstallCommand);
 
 program.parse(process.argv);
