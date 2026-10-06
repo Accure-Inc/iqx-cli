@@ -6,19 +6,19 @@ import { AccureClient } from "../accure/client";
 import { logSuccess, logError } from "../core/terminal";
 
 export const authCommand = new Command("auth")
-  .description("Manage authentication with AccureIQ Developer Hub API Tokens");
+  .description("Manage authentication with AccureIQx Developer Hub API Tokens");
 
 authCommand
   .command("login")
   .description("Authenticate with an Accure API Token from Developer Hub > API Key Manager")
   .option("-t, --token <token>", "Pass token directly")
-  .option("-u, --url <url>", "Accure API URL (defaults to http://localhost:8000)")
+  .option("-u, --url <url>", "Accure API URL (defaults to https://iqx-dev.accure.ai)")
   .action(async (options) => {
-    p.intro(chalk.bold.hex("#7C3AED")("Accure IQX Authentication"));
+    p.intro(chalk.bold.hex("#7C3AED")("AccureIQx Authentication"));
 
     let url = options.url;
     if (!url) {
-      const defaultUrl = getEffectiveApiUrl() || "http://localhost:8000";
+      const defaultUrl = getEffectiveApiUrl() || "https://iqx-dev.accure.ai";
       const urlInput = await p.text({
         message: "Enter Accure API URL:",
         defaultValue: defaultUrl,
@@ -36,7 +36,7 @@ authCommand
     if (!token) {
       p.note(
         "To get an API token:\n" +
-        "1. Open AccureIQ in your browser\n" +
+        "1. Open AccureIQx in your browser (e.g. https://iqx.accure.ai)\n" +
         "2. Navigate to Developer Hub > API Key Manager (or /developer/api-keys)\n" +
         "3. Click 'Create New Key' and copy your token (starts with ak-...)",
         "Instructions"
@@ -104,7 +104,7 @@ authCommand
     const token = getEffectiveToken();
     const url = getEffectiveApiUrl();
 
-    console.log(chalk.bold("\nIQX Authentication Status:"));
+    console.log(chalk.bold("\nAccureIQx Authentication Status:"));
     console.log(chalk.gray("─".repeat(40)));
     console.log(chalk.dim("API URL:       ") + chalk.cyan(url));
 
@@ -123,7 +123,7 @@ authCommand
     const result = await client.validateKey();
 
     if (result.valid) {
-      s.stop(chalk.green("Active & Connected to AccureIQ"));
+      s.stop(chalk.green("Active & Connected to AccureIQx"));
     } else {
       s.stop(chalk.red("Connection Error: " + (result.error || "Invalid token")));
     }

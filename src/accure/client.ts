@@ -47,7 +47,7 @@ export interface DefaultModelsSummary {
 }
 
 export function normalizeApiUrl(rawUrl: string): string {
-  let url = (rawUrl || "http://localhost:3000").trim();
+  let url = (rawUrl || "https://iqx-dev.accure.ai").trim();
   if (!url.startsWith("http://") && !url.startsWith("https://")) {
     url = (url.includes("localhost") || url.includes("127.0.0.1")) ? `http://${url}` : `https://${url}`;
   }

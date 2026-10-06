@@ -11,19 +11,19 @@ export async function ensureAuthenticated(): Promise<boolean> {
   }
 
   // Welcome banner for first-time launch
-  console.log("\n" + chalk.bold.hex("#7C3AED")("⚡ Accure IQX CLI") + chalk.gray(" | Enterprise Setup"));
+  console.log("\n" + chalk.bold.hex("#7C3AED")("⚡ AccureIQx CLI") + chalk.gray(" | Enterprise Setup"));
   console.log(chalk.gray("─".repeat(60)));
   console.log(chalk.yellow("No active Accure authentication found."));
   console.log(chalk.dim("Please connect your terminal to your Accure Enterprise instance.\n"));
 
   p.note(
-    "1. Open AccureIQ in your browser (e.g. https://iqx-dev.accure.ai or http://localhost:3000)\n" +
+    "1. Open AccureIQx in your browser (e.g. https://iqx.accure.ai)\n" +
     "2. Navigate to Developer Hub > API Key Manager\n" +
     "3. Click 'Create New Key' and copy your token (starts with ak-...)",
     "How to get an API Token"
   );
 
-  const defaultUrl = getEffectiveApiUrl() || "http://localhost:3000";
+  const defaultUrl = getEffectiveApiUrl() || "https://iqx-dev.accure.ai";
   const urlInput = await p.text({
     message: "Enter Accure Web URL (Press Enter for default):",
     defaultValue: defaultUrl,

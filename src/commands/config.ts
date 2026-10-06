@@ -4,13 +4,13 @@ import { configStore, type IQXConfig } from "../core/config";
 import { logSuccess, logError } from "../core/terminal";
 
 export const configCommand = new Command("config")
-  .description("Inspect and update IQX CLI configuration");
+  .description("Inspect and update AccureIQx CLI configuration");
 
 configCommand
   .command("list")
   .description("List all configuration key-values")
   .action(() => {
-    console.log(chalk.bold("\nIQX Configuration (~/.iqx/config.json):"));
+    console.log(chalk.bold("\nAccureIQx Configuration (~/.iqx/config.json):"));
     console.log(chalk.gray("─".repeat(45)));
     const all = configStore.store;
     for (const [key, value] of Object.entries(all)) {

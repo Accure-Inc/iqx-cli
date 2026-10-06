@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-# Accure IQX CLI Uninstaller
+# AccureIQx CLI Uninstaller
 
 GREEN='\033[0;32m'
 RED='\033[0;31m'
@@ -9,7 +9,7 @@ YELLOW='\033[0;33m'
 BOLD='\033[1m'
 NC='\033[0m'
 
-echo -e "\n${BOLD}Accure IQX CLI Uninstaller${NC}"
+echo -e "\n${BOLD}AccureIQx CLI Uninstaller${NC}"
 echo "────────────────────────────────────────"
 
 REMOVED=0
@@ -54,7 +54,7 @@ if [ -d "$HOME/.iqx" ]; then
 fi
 
 if [ "$REMOVED" -eq 1 ]; then
-  echo -e "\n${GREEN}${BOLD}✔ IQX CLI has been uninstalled successfully.${NC}\n"
+  echo -e "\n${GREEN}${BOLD}✔ AccureIQx CLI has been uninstalled successfully.${NC}\n"
 else
-  echo -e "\n${YELLOW}No IQX CLI installation found.${NC}\n"
+  echo -e "\n${YELLOW}No AccureIQx CLI installation found.${NC}\n"
 fi

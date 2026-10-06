@@ -4,7 +4,7 @@ import { getEffectiveApiUrl } from "./config";
 export function renderBanner(model: string, user?: string, org?: string) {
   const line = chalk.gray("─".repeat(60));
   const apiUrl = getEffectiveApiUrl();
-  console.log(chalk.bold.hex("#7C3AED")("⚡ IQX CLI") + chalk.gray(" | Accure Enterprise AI"));
+  console.log(chalk.bold.hex("#7C3AED")("⚡ AccureIQx CLI") + chalk.gray(" | Accure Enterprise AI"));
   console.log(line);
   console.log(
     chalk.dim("Workspace: ") + chalk.cyan(process.cwd()) + "\n" +

@@ -1,7 +1,7 @@
-# IQX CLI (⚡)
+# AccureIQx CLI (⚡)
 **Autonomous Agentic Terminal Assistant & Accure Enterprise AI Gateway**
 
-IQX CLI is a standalone, cross-platform pair-programming agent built to deliver the developer agility of AI, with native integration to Accure Unified Context Graph (UCG), Agentic Workflows, and Panel of Experts (POE).
+AccureIQx CLI is a standalone, cross-platform pair-programming agent built to deliver the developer agility of AI, with native integration to Accure Unified Context Graph (UCG), Agentic Workflows, and Panel of Experts (POE).
 
 ---
 
@@ -36,9 +36,9 @@ git diff | iqx "Write a concise conventional commit message"
 
 ## 🔐 Authentication: Developer Hub API Token
 
-To connect IQX CLI with your AccureIQ enterprise instance:
+To connect AccureIQx CLI with your AccureIQx enterprise instance:
 
-1. Open your browser to **AccureIQ**.
+1. Open your browser to **AccureIQx** (e.g. https://iqx.accure.ai).
 2. Navigate to **Developer Hub -> API Key Manager** (`/developer-hub?tab=tokens` or `/developer/api-keys`).
 3. Click **Generate API Key** and copy your token (`ak-...`).
 4. Authenticate in your terminal:
@@ -51,7 +51,7 @@ iqx auth login
 Or set an environment variable:
 ```bash
 export IQX_API_TOKEN="ak-..."
-export IQX_API_URL="http://localhost:8000"
+export IQX_API_URL="https://iqx-dev.accure.ai"
 ```
 
 Verify status:

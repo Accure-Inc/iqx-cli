@@ -1,3 +1,5 @@
+import os from "os";
+import path from "path";
 import Conf from "conf";
 
 export interface IQXConfig {
@@ -19,14 +21,14 @@ export interface IQXConfig {
 }
 
 const defaults: IQXConfig = {
-  api_url: process.env.IQX_API_URL || "http://localhost:3000",
+  api_url: process.env.IQX_API_URL || "https://iqx-dev.accure.ai",
   default_model: process.env.IQX_MODEL || "accure-enterprise",
   sandbox_mode: "strict"
 };
 
 export const configStore = new Conf<IQXConfig>({
-  projectName: "iqx-cli",
-  projectSuffix: "",
+  cwd: path.join(os.homedir(), ".iqx"),
+  configName: "config",
   defaults
 });
 
@@ -36,7 +38,7 @@ export function getEffectiveToken(): string | undefined {
 }
 
 export function getEffectiveApiUrl(): string {
-  const url = process.env.IQX_API_URL || configStore.get("api_url") || "http://localhost:3000";
+  const url = process.env.IQX_API_URL || configStore.get("api_url") || "https://iqx-dev.accure.ai";
   return url.replace(/\/$/, "");
 }
 
