@@ -12,7 +12,7 @@ export interface IQXConfig {
 }
 
 const defaults: IQXConfig = {
-  api_url: process.env.IQX_API_URL || "http://localhost:8000",
+  api_url: process.env.IQX_API_URL || "http://localhost:3000",
   default_model: process.env.IQX_MODEL || "accure-enterprise",
   sandbox_mode: "strict"
 };
@@ -29,6 +29,6 @@ export function getEffectiveToken(): string | undefined {
 }
 
 export function getEffectiveApiUrl(): string {
-  const url = process.env.IQX_API_URL || configStore.get("api_url") || "http://localhost:8000";
+  const url = process.env.IQX_API_URL || configStore.get("api_url") || "http://localhost:3000";
   return url.replace(/\/$/, "");
 }

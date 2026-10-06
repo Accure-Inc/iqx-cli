@@ -17,16 +17,15 @@ export async function ensureAuthenticated(): Promise<boolean> {
   console.log(chalk.dim("Please connect your terminal to your Accure Enterprise instance.\n"));
 
   p.note(
-    "1. Open AccureIQ in your browser (e.g. http://localhost:3000/developer/api-keys)\n" +
+    "1. Open AccureIQ in your browser (e.g. https://iqx-dev.accure.ai or http://localhost:3000)\n" +
     "2. Navigate to Developer Hub > API Key Manager\n" +
-    "3. Click 'Create New Key' and copy your token (starts with ak-...)\n" +
-    "4. For local development, backend API is at: http://localhost:8000",
+    "3. Click 'Create New Key' and copy your token (starts with ak-...)",
     "How to get an API Token"
   );
 
-  const defaultUrl = getEffectiveApiUrl() || "http://localhost:8000";
+  const defaultUrl = getEffectiveApiUrl() || "http://localhost:3000";
   const urlInput = await p.text({
-    message: "Enter Accure API URL (Press Enter for default):",
+    message: "Enter Accure Web URL (Press Enter for default):",
     defaultValue: defaultUrl,
     placeholder: defaultUrl
   });
@@ -59,7 +58,7 @@ export async function ensureAuthenticated(): Promise<boolean> {
   const token = (tokenInput as string).trim();
 
   const s = p.spinner();
-  s.start("Verifying credentials with Accure Enterprise Gateway...");
+  s.start("Verifying credentials with Accure Enterprise...");
 
   const client = new AccureClient(apiUrl, token);
   const result = await client.validateKey();
