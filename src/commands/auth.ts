@@ -3,35 +3,52 @@ import * as p from "@clack/prompts";
 import chalk from "chalk";
 import { configStore, getEffectiveToken, getEffectiveApiUrl } from "../core/config";
 import { AccureClient } from "../accure/client";
-import { logSuccess, logError, logInfo } from "../core/terminal";
+import { logSuccess, logError } from "../core/terminal";
 
 export const authCommand = new Command("auth")
   .description("Manage authentication with AccureIQ Developer Hub API Tokens");
 
 authCommand
   .command("login")
-  .description("Authenticate with an IQX Token from Developer Hub > API Key Manager")
+  .description("Authenticate with an Accure API Token from Developer Hub > API Key Manager")
   .option("-t, --token <token>", "Pass token directly")
-  .option("-u, --url <url>", "AccureIQ API URL (defaults to http://localhost:8000)")
+  .option("-u, --url <url>", "Accure API URL (defaults to http://localhost:8000)")
   .action(async (options) => {
-    p.intro(chalk.bold.hex("#7C3AED")("IQX Authentication"));
+    p.intro(chalk.bold.hex("#7C3AED")("Accure IQX Authentication"));
+
+    let url = options.url;
+    if (!url) {
+      const defaultUrl = getEffectiveApiUrl() || "http://localhost:8000";
+      const urlInput = await p.text({
+        message: "Enter Accure API URL:",
+        defaultValue: defaultUrl,
+        placeholder: defaultUrl
+      });
+
+      if (p.isCancel(urlInput)) {
+        p.cancel("Login cancelled.");
+        process.exit(0);
+      }
+      url = ((urlInput as string).trim() || defaultUrl).replace(/\/$/, "");
+    }
 
     let token = options.token;
-    let url = options.url || getEffectiveApiUrl();
-
     if (!token) {
       p.note(
         "To get an API token:\n" +
         "1. Open AccureIQ in your browser\n" +
-        "2. Navigate to Developer Hub > API Key Manager\n" +
-        "3. Click \x27Generate API Key\x27 and copy your token (ak-...)",
+        "2. Navigate to Developer Hub > API Key Manager (or /developer/api-keys)\n" +
+        "3. Click 'Create New Key' and copy your token (starts with ak-...)",
         "Instructions"
       );
 
       const input = await p.password({
-        message: "Enter your IQX API Token (starts with ak-):",
+        message: "Enter your Accure API Token (starts with ak-):",
         validate: (value) => {
-          if (!value || !value.startsWith("ak-")) {
+          if (!value || !value.trim()) {
+            return "API Token is required.";
+          }
+          if (!value.trim().startsWith("ak-")) {
             return "Valid token must start with 'ak-'";
           }
         }
@@ -41,11 +58,11 @@ authCommand
         p.cancel("Login cancelled.");
         process.exit(0);
       }
-      token = input as string;
+      token = (input as string).trim();
     }
 
     const s = p.spinner();
-    s.start("Validating token with AccureIQ Gateway...");
+    s.start("Validating token with Accure Enterprise Gateway...");
 
     const client = new AccureClient(url, token);
     const result = await client.validateKey();
@@ -53,13 +70,21 @@ authCommand
     if (!result.valid) {
       s.stop(chalk.red("Authentication failed"));
       logError(result.error || "Unable to verify API token");
-      process.exit(1);
-    }
 
-    s.stop(chalk.green("Token successfully verified!"));
+      const saveAnyway = await p.confirm({
+        message: "Could not reach server or verify key. Save anyway?",
+        initialValue: false
+      });
+      if (p.isCancel(saveAnyway) || !saveAnyway) {
+        process.exit(1);
+      }
+    } else {
+      s.stop(chalk.green("Token successfully verified!"));
+    }
 
     configStore.set("api_token", token);
     configStore.set("api_url", url);
+    configStore.set("default_model", "accure-enterprise");
 
     p.outro(chalk.bold.green("✔ Logged in successfully. Config saved to ~/.iqx/config.json"));
   });

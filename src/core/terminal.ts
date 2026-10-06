@@ -1,12 +1,15 @@
 import chalk from "chalk";
+import { getEffectiveApiUrl } from "./config";
 
 export function renderBanner(model: string, user?: string, org?: string) {
   const line = chalk.gray("─".repeat(60));
-  console.log(chalk.bold.hex("#7C3AED")("⚡ IQX CLI") + chalk.gray(" | Enterprise Agentic Terminal"));
+  const apiUrl = getEffectiveApiUrl();
+  console.log(chalk.bold.hex("#7C3AED")("⚡ IQX CLI") + chalk.gray(" | Accure Enterprise AI"));
   console.log(line);
   console.log(
     chalk.dim("Workspace: ") + chalk.cyan(process.cwd()) + "\n" +
-    chalk.dim("Model:     ") + chalk.yellow(model) +
+    chalk.dim("Gateway:   ") + chalk.blue(apiUrl) + "\n" +
+    chalk.dim("Model:     ") + chalk.yellow(model === "accure-enterprise" ? "accure-enterprise (Accure Managed AI)" : model) +
     (user ? chalk.dim(" | User: ") + chalk.green(user) : "") +
     (org ? chalk.dim(" | Org: ") + chalk.blue(org) : "")
   );

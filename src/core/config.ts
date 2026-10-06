@@ -13,7 +13,7 @@ export interface IQXConfig {
 
 const defaults: IQXConfig = {
   api_url: process.env.IQX_API_URL || "http://localhost:8000",
-  default_model: process.env.IQX_MODEL || "claude-3-7-sonnet",
+  default_model: process.env.IQX_MODEL || "accure-enterprise",
   sandbox_mode: "strict"
 };
 
@@ -24,9 +24,11 @@ export const configStore = new Conf<IQXConfig>({
 });
 
 export function getEffectiveToken(): string | undefined {
-  return process.env.IQX_API_TOKEN || configStore.get("api_token");
+  const token = process.env.IQX_API_TOKEN || configStore.get("api_token");
+  return token && token.trim() ? token.trim() : undefined;
 }
 
 export function getEffectiveApiUrl(): string {
-  return process.env.IQX_API_URL || configStore.get("api_url") || "http://localhost:8000";
+  const url = process.env.IQX_API_URL || configStore.get("api_url") || "http://localhost:8000";
+  return url.replace(/\/$/, "");
 }

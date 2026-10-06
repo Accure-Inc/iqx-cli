@@ -2,13 +2,14 @@
 import { Command } from "commander";
 import { authCommand } from "./commands/auth";
 import { configCommand } from "./commands/config";
-import { chatCommand } from "./commands/chat";
+import { chatCommand, startChatSession } from "./commands/chat";
 import { ucgCommand } from "./commands/ucg";
 import { expertCommand } from "./commands/expert";
 import { uninstallCommand } from "./commands/uninstall";
 import { Agent } from "./core/agent";
 import { configStore } from "./core/config";
 import { renderBanner } from "./core/terminal";
+import { ensureAuthenticated } from "./core/auth_guard";
 
 const program = new Command();
 
@@ -16,13 +17,13 @@ program
   .name("iqx")
   .description("Cross-platform autonomous agentic CLI for local pair programming & Accure Enterprise AI")
   .version("0.1.0")
-  .option("-m, --model <model>", "Model to use (claude-3-7-sonnet, gpt-4o)")
+  .option("-m, --model <model>", "Model to use (accure-enterprise, gpt-4o)")
   .option("-y, --yes", "Auto-approve all tool actions (autonomous mode)")
   .option("-p, --pipe <prompt>", "Run non-interactively in headless pipe mode")
   .argument("[prompt...]", "Task or coding prompt to execute immediately")
   .action(async (promptArgs, options) => {
     let prompt = options.pipe || promptArgs.join(" ").trim();
-    const model = options.model || configStore.get("default_model") || "claude-3-7-sonnet";
+    const model = options.model || configStore.get("default_model") || "accure-enterprise";
 
     // Read from standard input if piped (e.g. cat file.txt | iqx "check this")
     if (!process.stdin.isTTY && !options.pipe) {
@@ -37,13 +38,14 @@ program
     }
 
     if (!prompt) {
-      // Interactive chat session
-      renderBanner(model);
-      await chatCommand.parseAsync(["chat", ...(options.yes ? ["-y"] : [])], { from: "user" });
+      // Interactive chat session - prompts for login on first launch
+      await ensureAuthenticated();
+      await startChatSession({ model, yes: options.yes });
       return;
     }
 
     // Direct execution
+    await ensureAuthenticated();
     renderBanner(model);
     const agent = new Agent({
       model,

@@ -50,23 +50,42 @@ export class AccureClient {
 
   async validateKey(): Promise<{ valid: boolean; user?: any; error?: string }> {
     if (!this.token) {
-      return { valid: false, error: "No API token configured" };
+      return { valid: false, error: "No API token provided" };
     }
+
     try {
-      const res = await fetch(`${this.apiUrl}/api/v1/user-api-keys`, {
+      // Try panels endpoint first
+      const res = await fetch(`${this.apiUrl}/api/poe/panels`, {
         method: "GET",
         headers: this.getHeaders()
       });
-      if (!res.ok) {
-        if (res.status === 401) {
-          return { valid: false, error: "Invalid or expired API token" };
-        }
-        return { valid: false, error: `API responded with HTTP ${res.status}` };
+
+      if (res.ok) {
+        return { valid: true };
       }
-      const data = await res.json();
-      return { valid: true, user: data };
+
+      if (res.status === 401 || res.status === 403) {
+        return { valid: false, error: "Invalid or expired API token" };
+      }
+
+      // Try user-api-keys endpoint as alternate
+      const altRes = await fetch(`${this.apiUrl}/api/v1/user-api-keys`, {
+        method: "GET",
+        headers: this.getHeaders()
+      });
+
+      if (altRes.ok) {
+        const data = await altRes.json();
+        return { valid: true, user: data };
+      }
+
+      if (altRes.status === 401 || altRes.status === 403) {
+        return { valid: false, error: "Invalid or expired API token" };
+      }
+
+      return { valid: false, error: `Server responded with HTTP ${res.status}` };
     } catch (err: any) {
-      return { valid: false, error: `Failed to connect to ${this.apiUrl}: ${err.message}` };
+      return { valid: false, error: `Could not connect to ${this.apiUrl}: ${err.message}` };
     }
   }
 

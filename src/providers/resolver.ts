@@ -22,33 +22,104 @@ export async function callModel(
   tools: ToolDefinition[] = AVAILABLE_TOOLS,
   modelOverride?: string
 ): Promise<LLMResponse> {
-  const model = modelOverride || configStore.get("default_model") || "claude-3-7-sonnet";
+  const model = modelOverride || configStore.get("default_model") || "accure-enterprise";
   const token = getEffectiveToken();
-  const anthropicKey = process.env.ANTHROPIC_API_KEY;
   const openaiKey = process.env.OPENAI_API_KEY;
+  const anthropicKey = process.env.ANTHROPIC_API_KEY;
 
-  // 1. Direct Anthropic Claude API
-  if (anthropicKey && (model.includes("claude") || !openaiKey)) {
-    return await callAnthropic(messages, tools, model, anthropicKey);
-  }
-
-  // 2. Direct OpenAI API
-  if (openaiKey) {
-    return await callOpenAI(messages, tools, model, openaiKey);
-  }
-
-  // 3. Fallback to AccureIQ LLM Gateway (if token present)
+  // 1. Accure Enterprise AI Gateway (Primary when token configured)
   if (token) {
     return await callAccureGateway(messages, tools, model, token);
   }
 
+  // 2. Direct OpenAI API fallback
+  if (openaiKey) {
+    return await callOpenAI(messages, tools, model, openaiKey);
+  }
+
+  // 3. Direct Anthropic API fallback
+  if (anthropicKey) {
+    return await callAnthropic(messages, tools, model, anthropicKey);
+  }
+
   throw new Error(
-    "No LLM provider configured!\n" +
-    "Set one of the following:\n" +
-    "  • Run: iqx auth login (to use your AccureIQ Developer Hub Token)\n" +
-    "  • Export: ANTHROPIC_API_KEY=sk-ant-...\n" +
-    "  • Export: OPENAI_API_KEY=sk-..."
+    "No active connection or API key configured!\n" +
+    "To connect your Accure Enterprise instance:\n" +
+    "  • Run: iqx auth login\n" +
+    "Or set an environment variable:\n" +
+    "  • export IQX_API_TOKEN=ak-...\n" +
+    "  • export OPENAI_API_KEY=sk-..."
   );
+}
+
+async function callAccureGateway(messages: ChatMessage[], tools: ToolDefinition[], model: string, token: string): Promise<LLMResponse> {
+  const apiUrl = getEffectiveApiUrl();
+  const res = await fetch(`${apiUrl}/api/v1/chat/completions`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      "X-API-Key": token,
+      "Authorization": `Bearer ${token}`
+    },
+    body: JSON.stringify({
+      model: model === "accure-enterprise" ? "default" : model,
+      messages: messages.map(m => ({ role: m.role, content: m.content }))
+    })
+  });
+
+  if (!res.ok) {
+    const errText = await res.text();
+    throw new Error(`Accure Gateway Error (${res.status}): ${errText}`);
+  }
+
+  const data: any = await res.json();
+  const choice = data.choices?.[0]?.message;
+  return {
+    content: choice?.content || data.response || (typeof data === "string" ? data : JSON.stringify(data)),
+    tool_calls: choice?.tool_calls
+  };
+}
+
+async function callOpenAI(messages: ChatMessage[], tools: ToolDefinition[], model: string, apiKey: string): Promise<LLMResponse> {
+  const formattedTools = tools.map(t => ({
+    type: "function",
+    function: {
+      name: t.name,
+      description: t.description,
+      parameters: t.parameters
+    }
+  }));
+
+  const res = await fetch("https://api.openai.com/v1/chat/completions", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      "Authorization": `Bearer ${apiKey}`
+    },
+    body: JSON.stringify({
+      model: model.includes("gpt") ? model : "gpt-4o",
+      messages,
+      tools: formattedTools
+    })
+  });
+
+  if (!res.ok) {
+    const err = await res.text();
+    throw new Error(`OpenAI API Error (${res.status}): ${err}`);
+  }
+
+  const data: any = await res.json();
+  const choice = data.choices[0]?.message;
+  const toolCalls = choice?.tool_calls?.map((tc: any) => ({
+    id: tc.id,
+    name: tc.function.name,
+    arguments: JSON.parse(tc.function.arguments || "{}")
+  }));
+
+  return {
+    content: choice?.content || "",
+    tool_calls: toolCalls
+  };
 }
 
 async function callAnthropic(messages: ChatMessage[], tools: ToolDefinition[], model: string, apiKey: string): Promise<LLMResponse> {
@@ -117,68 +188,4 @@ async function callAnthropic(messages: ChatMessage[], tools: ToolDefinition[], m
   }
 
   return { content, tool_calls: toolCalls.length ? toolCalls : undefined };
-}
-
-async function callOpenAI(messages: ChatMessage[], tools: ToolDefinition[], model: string, apiKey: string): Promise<LLMResponse> {
-  const formattedTools = tools.map(t => ({
-    type: "function",
-    function: {
-      name: t.name,
-      description: t.description,
-      parameters: t.parameters
-    }
-  }));
-
-  const res = await fetch("https://api.openai.com/v1/chat/completions", {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      "Authorization": `Bearer ${apiKey}`
-    },
-    body: JSON.stringify({
-      model: model.includes("gpt") ? model : "gpt-4o",
-      messages,
-      tools: formattedTools
-    })
-  });
-
-  if (!res.ok) {
-    const err = await res.text();
-    throw new Error(`OpenAI API Error (${res.status}): ${err}`);
-  }
-
-  const data: any = await res.json();
-  const choice = data.choices[0]?.message;
-  const toolCalls = choice?.tool_calls?.map((tc: any) => ({
-    id: tc.id,
-    name: tc.function.name,
-    arguments: JSON.parse(tc.function.arguments || "{}")
-  }));
-
-  return {
-    content: choice?.content || "",
-    tool_calls: toolCalls
-  };
-}
-
-async function callAccureGateway(messages: ChatMessage[], tools: ToolDefinition[], model: string, token: string): Promise<LLMResponse> {
-  const apiUrl = getEffectiveApiUrl();
-  const res = await fetch(`${apiUrl}/api/v1/chat/completions`, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      "X-API-Key": token
-    },
-    body: JSON.stringify({
-      model,
-      messages,
-      tools
-    })
-  });
-
-  if (!res.ok) {
-    throw new Error(`Accure Gateway Error (${res.status}): ${res.statusText}`);
-  }
-  const data: any = await res.json();
-  return data;
 }
